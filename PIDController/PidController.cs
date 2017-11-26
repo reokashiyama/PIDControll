@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace PIDController
 {
@@ -30,12 +31,24 @@ namespace PIDController
         /// <param name="timeSinceLastUpdate">timespan of the elapsed time
         /// since the previous time that ControlVariable was called</param>
         /// <returns>Value of the variable that needs to be controlled</returns>
-        public double ControlVariable(TimeSpan timeSinceLastUpdate)
+        public double ControlVariable(TimeSpan timeSinceLastUpdate, string logfilepath)
         {
-            double error = SetPoint - ProcessVariable;
-
+            double current_error = SetPoint - ProcessVariable;
+            IntegralTerm = 0;
             // integral term calculation
-            IntegralTerm += (GainIntegral * error * timeSinceLastUpdate.TotalSeconds);
+            using (var csv = new CsvHelper.CsvReader(new StreamReader(logfilepath)))
+            {
+                csv.Configuration.HasHeaderRecord = false;
+                csv.Configuration.RegisterClassMap<PIDMap>();
+                var records = csv.GetRecords<PID>();
+                foreach (var item in records)
+                {
+                    double? error = item.target - item.current;
+                    if (error == null) error = 0;
+                    IntegralTerm += (GainIntegral * (double)error * timeSinceLastUpdate.TotalSeconds);
+                }
+            }
+            //IntegralTerm += (GainIntegral * error * timeSinceLastUpdate.TotalSeconds);
             IntegralTerm = Clamp(IntegralTerm);
 
             // derivative term calculation
@@ -43,7 +56,7 @@ namespace PIDController
             double derivativeTerm = GainDerivative * (dInput / timeSinceLastUpdate.TotalSeconds);
 
             // proportional term calcullation
-            double proportionalTerm = GainProportional * error;
+            double proportionalTerm = GainProportional * current_error;
 
             double output = proportionalTerm + IntegralTerm - derivativeTerm;
 
