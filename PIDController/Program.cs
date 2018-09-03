@@ -7,6 +7,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using CsvHelper.Configuration;
+using System.IO.Ports;
 
 namespace PIDController
 {
@@ -18,31 +19,44 @@ namespace PIDController
             string c = Path.DirectorySeparatorChar.ToString();
             string filepath = Directory.GetCurrentDirectory() + c + filename;
             var jobj = JObject.Parse(File.ReadAllText(filepath));
-            //  FIXME : P, I, D は設定の必要がある．
-            int SamplingSpan = int.Parse(jobj["SamplingSpan"].ToString());
+            int SamplingSpan = int.Parse(jobj["SAMPLING_SPAN"].ToString());
             double GAIN_P = double.Parse(jobj["GAIN_P"].ToString());
             double GAIN_I = double.Parse(jobj["GAIN_I"].ToString());
             double GAIN_D = double.Parse(jobj["GAIN_D"].ToString());
-            string logfilepath = Directory.GetCurrentDirectory() + /*c + ".." + c + "Log" +*/ c + jobj["LogFileName"].ToString();
-            //  FIXME : OUTPUTの上限値，下限値も決めておく必要がある．
             double OUTPUT_MAX = double.Parse(jobj["OUTPUT_MAX"].ToString());
             double OUTPUT_MIN = double.Parse(jobj["OUTPUT_MIN"].ToString());
+
             PidController pid = new PidController(GAIN_P, GAIN_I, GAIN_D, OUTPUT_MAX, OUTPUT_MIN);
-            //  プログラム実行の第1引数は参照軌道値（TARGET）
-            pid.SetPoint = double.Parse(args[0]);
-            //  プログラム実行の第2引数は現在値（TARGET）
-            pid.ProcessVariable = double.Parse(args[1]);
-            //  プログラム実行の第3引数は1個前の値（TARGET）
-            pid.ProcessVariableLast = double.Parse(args[2]);
 
-            //  XXX : updateのspanは1秒ごとにしているが，要検討
+            SerialPort LKG5000 = new SerialPort(jobj["PORT_NAME"].ToString(), int.Parse(jobj["BAURATE"].ToString()), Parity.None, 8, StopBits.One);
+            LKG5000.Open();
+            LKG5000.Write("MS,01\r");
+            string returnstring = LKG5000.ReadLine();
+            double current_value = double.Parse(returnstring.Substring(6, 8));
+            LKG5000.Close();
+
+            pid.SetPoint = double.Parse(jobj["SET_POINT"].ToString());
+            pid.ProcessVariable = current_value;
+            pid.ProcessVariableLast = double.Parse(jobj["LAST_VALUE"].ToString());
+            //  TODO    : change LAST_VALUE 
+
+            string logfilepath = Directory.GetCurrentDirectory() + /*c + ".." + c + "Log" +*/ c + jobj["LOG_FILE_NAME"].ToString();
+
             TimeSpan pastTimeFromLastUpdate = new TimeSpan(0, 0, 0, SamplingSpan);
-            double output = pid.ControlVariable(pastTimeFromLastUpdate, logfilepath);
+            double output = pid.ControlVariable(jobj, pastTimeFromLastUpdate, logfilepath);
 
-            System.IO.StreamWriter sw = new System.IO.StreamWriter(logfilepath,true,System.Text.Encoding.GetEncoding("shift_jis"));
-            //TextBox1.Textの内容を書き込む
-            sw.Write(pid.SetPoint.ToString() + "," + pid.ProcessVariable.ToString() + "," + output.ToString() + "\r\n");
-            //閉じる
+            System.IO.StreamWriter sw_csv = new System.IO.StreamWriter(logfilepath,true,System.Text.Encoding.GetEncoding("shift_jis"));
+            sw_csv.Write(pid.SetPoint.ToString() + "," + current_value + "," + output.ToString() + "\r\n");
+            sw_csv.Close();
+
+            StreamReader sr = new StreamReader(filepath, Encoding.GetEncoding("Shift_JIS"));
+            string s = sr.ReadToEnd();
+            sr.Close();
+            s = s.Replace("\"LAST_VALUE\": " + double.Parse(jobj["LAST_VALUE"].ToString()) + ",", "\"LAST_VALUE\": " + current_value + ",");
+            s = s.Replace("\"INTEGRAL_TERM\": " + double.Parse(jobj["INTEGRAL_TERM"].ToString()) + ",", "\"LAST_VALUE\": " + pid.IntegralTerm + ",");
+
+            StreamWriter sw = new StreamWriter(filepath, false, Encoding.GetEncoding("Shift_JIS"));
+            sw.Write(s);
             sw.Close();
 
             Console.WriteLine(output);
@@ -51,7 +65,6 @@ namespace PIDController
     }
     public class PID
     {
-        public double? target { get; set; }
         public double? current { get; set; }
         public double? output { get; set; }
     }
@@ -59,9 +72,8 @@ namespace PIDController
     {
         public PIDMap()
         {
-            Map(m => m.target).Index(0);
-            Map(m => m.current).Index(1);
-            Map(m => m.output).Index(2);
+            Map(m => m.current).Index(0);
+            Map(m => m.output).Index(1);
         }
     }
 }
