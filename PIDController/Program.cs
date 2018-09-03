@@ -31,8 +31,9 @@ namespace PIDController
             SerialPort LKG5000 = new SerialPort(jobj["PORT_NAME"].ToString(), int.Parse(jobj["BAURATE"].ToString()), Parity.None, 8, StopBits.One);
             LKG5000.Open();
             LKG5000.Write("MS,01\r");
-            string returnstring = LKG5000.ReadLine();
-            double current_value = double.Parse(returnstring.Substring(6, 8));
+            string returnstring = "MS,01, 1234.56";
+            //string returnstring = LKG5000.ReadLine();
+            double current_value = double.Parse(returnstring.Substring(int.Parse(jobj["START_INDEX"].ToString()), int.Parse(jobj["COUNT"].ToString())));
             LKG5000.Close();
 
             pid.SetPoint = double.Parse(jobj["SET_POINT"].ToString());
@@ -52,8 +53,8 @@ namespace PIDController
             StreamReader sr = new StreamReader(filepath, Encoding.GetEncoding("Shift_JIS"));
             string s = sr.ReadToEnd();
             sr.Close();
-            s = s.Replace("\"LAST_VALUE\": " + double.Parse(jobj["LAST_VALUE"].ToString()) + ",", "\"LAST_VALUE\": " + current_value + ",");
-            s = s.Replace("\"INTEGRAL_TERM\": " + double.Parse(jobj["INTEGRAL_TERM"].ToString()) + ",", "\"LAST_VALUE\": " + pid.IntegralTerm + ",");
+            s = s.Replace("\"LAST_VALUE\": \"" + jobj["LAST_VALUE"].ToString() + "\",\r\n", "\"LAST_VALUE\": \"" + current_value + "\",\r\n");
+            s = s.Replace("\"INTEGRAL_TERM\": \"" + jobj["INTEGRAL_TERM"].ToString() + "\",\r\n", "\"INTEGRAL_TERM\": \"" + pid.IntegralTerm + "\",\r\n");
 
             StreamWriter sw = new StreamWriter(filepath, false, Encoding.GetEncoding("Shift_JIS"));
             sw.Write(s);
