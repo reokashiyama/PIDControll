@@ -25,14 +25,22 @@ namespace PIDController
             double GAIN_D = double.Parse(jobj["GAIN_D"].ToString());
             double OUTPUT_MAX = double.Parse(jobj["OUTPUT_MAX"].ToString());
             double OUTPUT_MIN = double.Parse(jobj["OUTPUT_MIN"].ToString());
+            bool debug = bool.Parse(jobj["DEBUG"].ToString());
 
             PidController pid = new PidController(GAIN_P, GAIN_I, GAIN_D, OUTPUT_MAX, OUTPUT_MIN);
 
             SerialPort LKG5000 = new SerialPort(jobj["PORT_NAME"].ToString(), int.Parse(jobj["BAURATE"].ToString()), Parity.None, 8, StopBits.One);
             LKG5000.Open();
             LKG5000.Write("MS,01\r");
-            string returnstring = "MS,01, 1234.56";
-            //string returnstring = LKG5000.ReadLine();
+            string returnstring = "";
+            if (debug)
+            {
+                returnstring = "MS,01, 1234.56";
+            }
+            else
+            {
+                returnstring = LKG5000.ReadLine();
+            }
             double current_value = double.Parse(returnstring.Substring(int.Parse(jobj["START_INDEX"].ToString()), int.Parse(jobj["COUNT"].ToString())));
             LKG5000.Close();
 
