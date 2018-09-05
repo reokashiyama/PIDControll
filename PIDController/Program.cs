@@ -32,6 +32,7 @@ namespace PIDController
             SerialPort LKG5000 = new SerialPort(jobj["PORT_NAME"].ToString(), int.Parse(jobj["BAURATE"].ToString()), Parity.None, 8, StopBits.One);
             LKG5000.Open();
             LKG5000.Write("MS,01\r");
+            LKG5000.NewLine = "\r";
             string returnstring = "";
             if (debug)
             {
