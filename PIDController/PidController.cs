@@ -50,8 +50,6 @@ namespace PIDController
             IntegralTerm = double.Parse(jobj["INTEGRAL_TERM"].ToString());
             IntegralTerm += (GainIntegral * current_error * timeSinceLastUpdate.TotalSeconds);
 
-            IntegralTerm = Clamp(IntegralTerm);
-
             // derivative term calculation
             double dInput = ProcessVariable - ProcessVariableLast;
             double derivativeTerm = GainDerivative * (dInput / timeSinceLastUpdate.TotalSeconds);
