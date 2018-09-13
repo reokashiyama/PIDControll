@@ -53,7 +53,7 @@ namespace PIDController
             string logfilepath = Directory.GetCurrentDirectory() + /*c + ".." + c + "Log" +*/ c + jobj["LOG_FILE_NAME"].ToString();
 
             TimeSpan pastTimeFromLastUpdate = new TimeSpan(0, 0, 0, SamplingSpan);
-            double output = pid.ControlVariable(jobj, pastTimeFromLastUpdate, logfilepath);
+            double output = pid.ControlVariable(jobj, pastTimeFromLastUpdate);
 
             System.IO.StreamWriter sw_csv = new System.IO.StreamWriter(logfilepath,true,System.Text.Encoding.GetEncoding("shift_jis"));
             sw_csv.Write(pid.SetPoint.ToString() + "," + current_value + "," + output.ToString() + "\r\n");

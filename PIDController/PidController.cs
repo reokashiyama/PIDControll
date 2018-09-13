@@ -32,21 +32,9 @@ namespace PIDController
         /// <param name="timeSinceLastUpdate">timespan of the elapsed time
         /// since the previous time that ControlVariable was called</param>
         /// <returns>Value of the variable that needs to be controlled</returns>
-        public double ControlVariable(JObject jobj, TimeSpan timeSinceLastUpdate, string logfilepath)
+        public double ControlVariable(JObject jobj, TimeSpan timeSinceLastUpdate)
         {
             double current_error = SetPoint - ProcessVariable;
-            // integral term calculation
-            //var csv = new CsvHelper.CsvReader(new StreamReader(logfilepath));
-            //csv.Configuration.HasHeaderRecord = false;
-            //csv.Configuration.RegisterClassMap<PIDMap>();
-            //var records = csv.GetRecords<PID>();
-            //foreach (var item in records)
-            //{
-            //    double? error = double.Parse(jobj["SET_POINT"].ToString()) - item.current;
-            //    if (error == null) error = 0;
-            //    IntegralTerm += (GainIntegral * (double)error * timeSinceLastUpdate.TotalSeconds);
-            //}
-            //  TODO    : change the method to get the value of IntegralTerm
             IntegralTerm = double.Parse(jobj["INTEGRAL_TERM"].ToString());
             IntegralTerm += (GainIntegral * current_error * timeSinceLastUpdate.TotalSeconds);
 
