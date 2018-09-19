@@ -56,7 +56,7 @@ namespace PIDController
             double output = pid.ControlVariable(jobj, pastTimeFromLastUpdate);
 
             System.IO.StreamWriter sw_csv = new System.IO.StreamWriter(logfilepath,true,System.Text.Encoding.GetEncoding("shift_jis"));
-            sw_csv.Write(pid.SetPoint.ToString() + "," + current_value + "," + output.ToString() + "\r\n");
+            sw_csv.Write(DateTime.Now.ToString("yyyyMMddTHHmmss") + "," + pid.SetPoint.ToString() + "," + current_value + "," + output.ToString() + "\r\n");
             sw_csv.Close();
 
             StreamReader sr = new StreamReader(filepath, Encoding.GetEncoding("Shift_JIS"));
