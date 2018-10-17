@@ -20,12 +20,15 @@ namespace PIDController
             string filepath = Directory.GetCurrentDirectory() + c + filename;
             var jobj = JObject.Parse(File.ReadAllText(filepath));
             int SamplingSpan = int.Parse(jobj["SAMPLING_SPAN"].ToString());
+            int TimeSpan = int.Parse(jobj["TIMESPAN"].ToString());
+            int mode_of_feedforward = int.Parse(jobj["FEEDFORWARDMODE"].ToString());
             double GAIN_P = double.Parse(jobj["GAIN_P"].ToString());
             double GAIN_I = double.Parse(jobj["GAIN_I"].ToString());
             double GAIN_D = double.Parse(jobj["GAIN_D"].ToString());
             double OUTPUT_MAX = double.Parse(jobj["OUTPUT_MAX"].ToString());
             double OUTPUT_MIN = double.Parse(jobj["OUTPUT_MIN"].ToString());
             bool debug = bool.Parse(jobj["DEBUG"].ToString());
+            bool feedback_mode = bool.Parse(jobj["FEEDBACK"].ToString());
 
             PidController pid = new PidController(GAIN_P, GAIN_I, GAIN_D, OUTPUT_MAX, OUTPUT_MIN);
 
@@ -53,7 +56,27 @@ namespace PIDController
             string logfilepath = Directory.GetCurrentDirectory() + /*c + ".." + c + "Log" +*/ c + jobj["LOG_FILE_NAME"].ToString();
 
             TimeSpan pastTimeFromLastUpdate = new TimeSpan(0, 0, 0, SamplingSpan);
-            double output = pid.ControlVariable(jobj, pastTimeFromLastUpdate);
+            double output;
+
+            if (feedback_mode)
+            {
+                output = pid.ControlVariable(jobj, pastTimeFromLastUpdate);
+            }
+            else
+            {
+                if (mode_of_feedforward == 1)
+                {
+                    output = pid.ProcessVariableLast + (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
+                }
+                else if (mode_of_feedforward == 2)
+                {
+                    output = pid.ProcessVariableLast - (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
+                }
+                else
+                {
+                    output = pid.OutputMin;
+                }
+            }
 
             System.IO.StreamWriter sw_csv = new System.IO.StreamWriter(logfilepath,true,System.Text.Encoding.GetEncoding("shift_jis"));
             int now_in_second = DateTime.Now.Minute * 60 + DateTime.Now.Second;
@@ -66,12 +89,18 @@ namespace PIDController
             s = s.Replace("\"LAST_VALUE\": \"" + jobj["LAST_VALUE"].ToString() + "\",\r\n", "\"LAST_VALUE\": \"" + current_value + "\",\r\n");
             s = s.Replace("\"INTEGRAL_TERM\": \"" + jobj["INTEGRAL_TERM"].ToString() + "\",\r\n", "\"INTEGRAL_TERM\": \"" + pid.IntegralTerm + "\",\r\n");
 
+            if (!feedback_mode)
+            {
+                if (mode_of_feedforward == 1 && output >= pid.OutputMax) mode_of_feedforward = 2;
+                else if (mode_of_feedforward == 2 && output <= pid.OutputMin) mode_of_feedforward = 3;
+                s = s.Replace("\"FEEDFORWARDMODE\": \"" + jobj["FEEDFORWARDMODE"].ToString() + "\",\r\n", "\"FEEDFORWARDMODE\": \"" + mode_of_feedforward + "\",\r\n");
+            }
+
             StreamWriter sw = new StreamWriter(filepath, false, Encoding.GetEncoding("Shift_JIS"));
             sw.Write(s);
             sw.Close();
 
             Console.WriteLine(output);
-            //return output;
         }
     }
     public class PID
