@@ -20,14 +20,17 @@ namespace PIDController
             string filepath = Directory.GetCurrentDirectory() + c + filename;
             var jobj = JObject.Parse(File.ReadAllText(filepath));
             int SamplingSpan = int.Parse(jobj["SAMPLING_SPAN"].ToString());
-            int TimeSpan = int.Parse(jobj["TIMESPAN"].ToString());
-            int mode_of_feedforward = int.Parse(jobj["FEEDFORWARDMODE"].ToString());
+            int half_timeSpan = int.Parse(jobj["HALF_TIMESPAN"].ToString());
+            int test_duration = int.Parse(jobj["TEST_DURATION"].ToString());
+            int const_value = int.Parse(jobj["CONST_VALUE"].ToString());
             double GAIN_P = double.Parse(jobj["GAIN_P"].ToString());
             double GAIN_I = double.Parse(jobj["GAIN_I"].ToString());
             double GAIN_D = double.Parse(jobj["GAIN_D"].ToString());
             double OUTPUT_MAX = double.Parse(jobj["OUTPUT_MAX"].ToString());
             double OUTPUT_MIN = double.Parse(jobj["OUTPUT_MIN"].ToString());
             double output_last = double.Parse(jobj["OUTPUT_LAST"].ToString());
+            double MAX_POWER = double.Parse(jobj["MAX_POWER"].ToString());
+            double RESISTANCE_VALUE = double.Parse(jobj["RESISTANCE_VALUE"].ToString());
             bool debug = bool.Parse(jobj["DEBUG"].ToString());
             bool feedback_mode = bool.Parse(jobj["FEEDBACK"].ToString());
 
@@ -58,6 +61,7 @@ namespace PIDController
 
             TimeSpan pastTimeFromLastUpdate = new TimeSpan(0, 0, 0, SamplingSpan);
             double output;
+            test_duration += SamplingSpan;
 
             if (feedback_mode)
             {
@@ -65,13 +69,13 @@ namespace PIDController
             }
             else
             {
-                if (mode_of_feedforward == 1)
+                if (test_duration <= half_timeSpan)
                 {
-                    output = output_last + (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
+                    output = Math.Sqrt(MAX_POWER / half_timeSpan * RESISTANCE_VALUE * test_duration);
                 }
-                else if (mode_of_feedforward == 2)
+                else if (half_timeSpan < test_duration && test_duration <= 2 * half_timeSpan)
                 {
-                    output = output_last - (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
+                    output = Math.Sqrt(2 * MAX_POWER * RESISTANCE_VALUE - MAX_POWER / half_timeSpan * RESISTANCE_VALUE * test_duration);
                 }
                 else
                 {
@@ -90,13 +94,7 @@ namespace PIDController
             s = s.Replace("\"LAST_VALUE\": \"" + jobj["LAST_VALUE"].ToString() + "\",\r\n", "\"LAST_VALUE\": \"" + current_value + "\",\r\n");
             s = s.Replace("\"INTEGRAL_TERM\": \"" + jobj["INTEGRAL_TERM"].ToString() + "\",\r\n", "\"INTEGRAL_TERM\": \"" + pid.IntegralTerm + "\",\r\n");
             s = s.Replace("\"OUTPUT_LAST\": \"" + jobj["OUTPUT_LAST"].ToString() + "\",\r\n", "\"OUTPUT_LAST\": \"" + output + "\",\r\n");
-
-            if (!feedback_mode)
-            {
-                if (mode_of_feedforward == 1 && output >= pid.OutputMax) mode_of_feedforward = 2;
-                else if (mode_of_feedforward == 2 && output <= pid.OutputMin) mode_of_feedforward = 3;
-                s = s.Replace("\"FEEDFORWARDMODE\": \"" + jobj["FEEDFORWARDMODE"].ToString() + "\",\r\n", "\"FEEDFORWARDMODE\": \"" + mode_of_feedforward + "\",\r\n");
-            }
+            s = s.Replace("\"TEST_DURATION\": \"" + jobj["TEST_DURATION"].ToString() + "\",\r\n", "\"TEST_DURATION\": \"" + test_duration + "\",\r\n");
 
             StreamWriter sw = new StreamWriter(filepath, false, Encoding.GetEncoding("Shift_JIS"));
             sw.Write(s);

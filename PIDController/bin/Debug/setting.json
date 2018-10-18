@@ -14,8 +14,11 @@
   "START_INDEX": "6",
   "COUNT": "8",
   "FEEDBACK": "false",
-  "TIMESPAN": "1500",
-  "FEEDFORWARDMODE": "2",
+  "HALF_TIMESPAN": "1500",
+  "MAX_POWER": "1500",
+  "RESISTANCE_VALUE": "10",
   "OUTPUT_LAST": "2",
+  "TEST_DURATION": "0",
+  "CONST_VALUE": "0",
   "DEBUG": "true"
 }
