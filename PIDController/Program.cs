@@ -71,11 +71,11 @@ namespace PIDController
             {
                 if (test_duration <= half_timeSpan)
                 {
-                    output = Math.Sqrt(MAX_POWER / half_timeSpan * RESISTANCE_VALUE * test_duration);
+                    output = Math.Sqrt(MAX_POWER / half_timeSpan * RESISTANCE_VALUE * test_duration) * OUTPUT_MAX / 18;
                 }
                 else if (half_timeSpan < test_duration && test_duration <= 2 * half_timeSpan)
                 {
-                    output = Math.Sqrt(2 * MAX_POWER * RESISTANCE_VALUE - MAX_POWER / half_timeSpan * RESISTANCE_VALUE * test_duration);
+                    output = Math.Sqrt(2 * MAX_POWER * RESISTANCE_VALUE - MAX_POWER / half_timeSpan * RESISTANCE_VALUE * test_duration) * OUTPUT_MAX / 18;
                 }
                 else
                 {
