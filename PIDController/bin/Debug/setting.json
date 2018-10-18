@@ -1,7 +1,7 @@
 {
   "SET_POINT": "9999",
   "LAST_VALUE": "1234.56",
-  "INTEGRAL_TERM": "10",
+  "INTEGRAL_TERM": "0",
   "SAMPLING_SPAN": "2",
   "LOG_FILE_NAME": "P=60,I=5.csv",
   "GAIN_P": "1",
@@ -9,13 +9,13 @@
   "GAIN_D": "1",
   "OUTPUT_MAX": "10",
   "OUTPUT_MIN": "0",
-  "LKG5000_PORT_NAME": "COM1",
-  "GL900_PORT_NAME": "COM1",
+  "PORT_NAME": "COM1",
   "BAURATE": "9600",
   "START_INDEX": "6",
   "COUNT": "8",
-  "FEEDBACK": "true",
+  "FEEDBACK": "false",
   "TIMESPAN": "1500",
-  "FEEDFORWARDMODE": "1",
-  "DEBUG": "false"
+  "FEEDFORWARDMODE": "2",
+  "OUTPUT_LAST": "2",
+  "DEBUG": "true"
 }

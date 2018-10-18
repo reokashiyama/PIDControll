@@ -27,6 +27,7 @@ namespace PIDController
             double GAIN_D = double.Parse(jobj["GAIN_D"].ToString());
             double OUTPUT_MAX = double.Parse(jobj["OUTPUT_MAX"].ToString());
             double OUTPUT_MIN = double.Parse(jobj["OUTPUT_MIN"].ToString());
+            double output_last = double.Parse(jobj["OUTPUT_LAST"].ToString());
             bool debug = bool.Parse(jobj["DEBUG"].ToString());
             bool feedback_mode = bool.Parse(jobj["FEEDBACK"].ToString());
 
@@ -66,11 +67,11 @@ namespace PIDController
             {
                 if (mode_of_feedforward == 1)
                 {
-                    output = pid.ProcessVariableLast + (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
+                    output = output_last + (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
                 }
                 else if (mode_of_feedforward == 2)
                 {
-                    output = pid.ProcessVariableLast - (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
+                    output = output_last - (pid.OutputMax - pid.OutputMin) / TimeSpan * SamplingSpan;
                 }
                 else
                 {
@@ -88,6 +89,7 @@ namespace PIDController
             sr.Close();
             s = s.Replace("\"LAST_VALUE\": \"" + jobj["LAST_VALUE"].ToString() + "\",\r\n", "\"LAST_VALUE\": \"" + current_value + "\",\r\n");
             s = s.Replace("\"INTEGRAL_TERM\": \"" + jobj["INTEGRAL_TERM"].ToString() + "\",\r\n", "\"INTEGRAL_TERM\": \"" + pid.IntegralTerm + "\",\r\n");
+            s = s.Replace("\"OUTPUT_LAST\": \"" + jobj["OUTPUT_LAST"].ToString() + "\",\r\n", "\"OUTPUT_LAST\": \"" + output + "\",\r\n");
 
             if (!feedback_mode)
             {
